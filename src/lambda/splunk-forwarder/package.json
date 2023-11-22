@@ -1,0 +1,31 @@
+{
+  "name": "splunk-forwarder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/index.js",
+  "scripts": {
+    "test": "LOG_LEVEL=${LOG_LEVEL:=off} jest --verbose",
+    "bump": "npm version patch && git push --tags && git push --all",
+    "release": "npm run bundle",
+    "cleanup": "rm -rf node_modules test package-lock.json *.js",
+    "bundle": "rm -rf ./dist/* && esbuild --bundle src/index.ts --platform=node --target=node18 --minify --keep-names --sourcemap --outdir=dist",
+    "format": "dprint fmt ./src/**/*",
+    "clean": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path ./dist) { Remove-Item -Recurse -Force ./dist }; if (Test-Path ./package.zip) { Remove-Item -Force ./package.zip }\"",
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"npm run clean; tsc; New-Item -Path ./dist -ItemType Directory -Force; Copy-Item -Recurse node_modules ./dist/node_modules\"",
+    "deploy": "cd ../../../ && bundle exec terraspace up splunk_forwarder",
+    "all": "npm run build && npm run deploy"
+  },
+  "keywords": [],
+  "author": "Andrey Chausenko <Andrey.Chausenko@det.nsw.edu.au>",
+  "license": "Proprietary",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.114",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.11",
+    "esbuild": "^0.19.5",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2",
+    "zlib": "^1.0.5"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "loggingservice-subscriptionfilterhandler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/lambda/index.ts",
+  "scripts": {
+    "test": "cd dist/lambda; node index.js",
+    "clean": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path ./dist) { Remove-Item -Recurse -Force ./dist }; if (Test-Path ./package.zip) { Remove-Item -Force ./package.zip }\"",
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"npm run clean; tsc; New-Item -Path ./dist -ItemType Directory -Force; Copy-Item -Recurse node_modules ./dist/node_modules\"",
+    "deploy": "cd ../../../ && bundle exec terraspace up subscription_filter_handler",
+    "all": "npm run build && npm run deploy"
+  },
+  "keywords": [],
+  "author": "Joel Bradley <Joel.Bradley3@det.nsw.edu.au>",
+  "license": "Proprietary",
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.441.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0"
+  }
+}
