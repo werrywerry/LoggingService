@@ -10,6 +10,10 @@ const logsClient = new CloudWatchLogsClient({ region: "ap-southeast-2" });
 const logGroupsWithFilters: string[] = [];
 const subscriptionsToAdd: string[] = [];
 const subscriptionsToRemove: string[] = [];
+const filterName = `LogsForSplunkForwarderLambda-${process.env.ENV}`;
+var MAX_RETRIES: number;
+var retryCount: number;
+var errorState: boolean;
 
 interface CloudTrailEventDetail {
   eventName: string;
@@ -24,12 +28,20 @@ interface CloudTrailEvent {
 }
 
 export const handler = async (event: CloudTrailEvent) => {
+  MAX_RETRIES = 15; // Adjust as needed
+  retryCount = 0;
+  errorState = false;
+
   try {
     await processExistingLogGroups();
-    return { status: 'Success' };
+    if (errorState) {
+      return { status: 'Complete with errors. Check logs' }
+    } else {
+      return { status: 'Success' };
+    }
   } catch (error) {
     console.error(error);
-    throw new Error('Error creating subscription filters');
+    errorState = true;
   }
 };
 
@@ -56,26 +68,14 @@ async function processExistingLogGroups() {
     nextToken = logGroupsResponse.nextToken;
   } while (nextToken);
 
-  // Log the array of log group names
-  // console.log("Number of log groups found: ", logGroupNames.length);
-  // console.log("Log groups to check subscriptions for: ", logGroupNames);
-
   for (const logGroupName of logGroupNames) {
     await ensureSubscriptionFilter(logGroupName);
   }
-
-  console.log("Log groups with existing subscription filters: ", logGroupsWithFilters);
-  console.log(`Attempted to add subscription filters to ${subscriptionsToAdd.length} log groups`);
-  console.log(`Attempted to remove subscription filters from ${subscriptionsToRemove.length} log groups`);
-
 }
-
-var retryCount = 0;
-const MAX_RETRIES = 10; // Adjust as needed
 
 async function ensureSubscriptionFilter(logGroupName: string) {
   try {
-    const desiredDestinationArn = `arn:aws:lambda:ap-southeast-2:318468042250:function:LoggingService-SplunkForwarder-${process.env.ENV}`;
+    const desiredDestinationArn = process.env.SPLUNK_FORWARDER_ARN!;
     const describeSubscriptionFiltersCommand = new DescribeSubscriptionFiltersCommand({
       logGroupName: logGroupName
     });
@@ -85,20 +85,21 @@ async function ensureSubscriptionFilter(logGroupName: string) {
     const existingFilterWithDesiredArn = subscriptionFilters.find(filter => filter.destinationArn === desiredDestinationArn);
 
     if (existingFilterWithDesiredArn && process.env.REMOVE_SUBSCRIPTIONS === "true") {
-      //subscriptionsToRemove.push(logGroupName);
-      await removeSubscriptionFilter(logGroupName, desiredDestinationArn);
+      subscriptionsToRemove.push(logGroupName);
+      await removeSubscriptionFilter(logGroupName);
     }
     else if (!existingFilterWithDesiredArn && process.env.REMOVE_SUBSCRIPTIONS === "false") {
       if (subscriptionFilters.length < 2) {
-        /*
+
         if (subscriptionFilters.length > 0) {
           logGroupsWithFilters.push(logGroupName);
         }
         subscriptionsToAdd.push(logGroupName);
-        */
+
         await createSubscriptionFilter(logGroupName, desiredDestinationArn);
       } else {
-        console.error(`Error: Log group ${logGroupName} already has two subscription filters. One filter needs to be removed to add the Splunk forwarder filter.`);
+        console.warn(`Error: Log group ${logGroupName} already has two subscription filters. One filter needs to be removed to add the Splunk forwarder filter.`);
+        errorState = true;
       }
     }
   } catch (error) {
@@ -109,7 +110,8 @@ async function ensureSubscriptionFilter(logGroupName: string) {
       await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000)); // Exponential backoff
       return ensureSubscriptionFilter(logGroupName);
     } else {
-      throw typedError;
+      console.log(error);
+      errorState = true;
     }
   }
 }
@@ -118,19 +120,18 @@ async function createSubscriptionFilter(logGroupName: string, desiredDestination
   try {
     const putSubscriptionFilterCommand = new PutSubscriptionFilterCommand({
       logGroupName: logGroupName,
-      filterName: `LogsForSplunkForwarderLambda-${process.env.ENV}`,
-      filterPattern: '', // You can specify a filter pattern here
+      filterName: filterName,
+      filterPattern: '',
       destinationArn: desiredDestinationArn,
     });
     await logsClient.send(putSubscriptionFilterCommand);
-    // console.log(`Subscription filter created for log group '${logGroupName}'`);
   } catch (error) {
     console.error(`Error creating subscription filter for log group '${logGroupName}':`, error);
-    // throw error;
+    errorState = true;
   }
 }
 
-async function removeSubscriptionFilter(logGroupName: string, filterName: string) {
+async function removeSubscriptionFilter(logGroupName: string) {
   try {
     const deleteSubscriptionFilterCommand = new DeleteSubscriptionFilterCommand({
       logGroupName: logGroupName,
@@ -138,9 +139,8 @@ async function removeSubscriptionFilter(logGroupName: string, filterName: string
     });
 
     await logsClient.send(deleteSubscriptionFilterCommand);
-    // console.log(`Subscription filter '${filterName}' removed from log group '${logGroupName}'`);
   } catch (error) {
     console.error(`Error removing subscription filter from log group '${logGroupName}':`, error);
-    // throw error;
+    errorState = true;
   }
 }

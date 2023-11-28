@@ -12,11 +12,12 @@
     "format": "dprint fmt ./src/**/*",
     "clean": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path ./dist) { Remove-Item -Recurse -Force ./dist }; if (Test-Path ./package.zip) { Remove-Item -Force ./package.zip }\"",
     "build": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"npm run clean; tsc; New-Item -Path ./dist -ItemType Directory -Force; Copy-Item -Recurse node_modules ./dist/node_modules\"",
+    "clean-build": "npm run clean && npm run build",
     "deploy": "cd ../../../ && bundle exec terraspace up splunk_forwarder",
     "all": "npm run build && npm run deploy"
   },
   "keywords": [],
-  "author": "Andrey Chausenko <Andrey.Chausenko@det.nsw.edu.au>",
+  "author": "Joel Bradley <Joel.Bradley3@det.nsw.edu.au>",
   "license": "Proprietary",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.114",
@@ -27,5 +28,8 @@
     "ts-jest": "^29.1.1",
     "typescript": "^5.2.2",
     "zlib": "^1.0.5"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.458.0"
   }
 }
