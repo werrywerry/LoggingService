@@ -16,7 +16,11 @@
     "emitDecoratorMetadata": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
-    "allowJs": true
+    "allowJs": true,
+    "types": [
+      "jest",
+      "node"
+    ]
   },
   "exclude": [
     "examples",

@@ -2,3 +2,5 @@
 dist
 node_modules
 package.zip
+junit.xml
+coverage
