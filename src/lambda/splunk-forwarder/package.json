@@ -37,10 +37,9 @@
         "tsconfig": "./tsconfig.json"
       }
     },
+    "testPathIgnorePatterns": ["/node_modules/", "/dist/"],
     "collectCoverage": true,
-    "coverageReporters": [
-      "clover"
-    ],
+    "coverageReporters": ["clover"],
     "reporters": [
       "default",
       [
