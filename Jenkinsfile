@@ -122,7 +122,11 @@ pipeline {
         script {
           sh '''
           	eval $(aws sts assume-role --role-arn "arn:aws:iam::${ACCOUNT_ID}:role/app-iam-role-entint-default-ci-exec" --role-session-name "terraspace_provisioning" | jq -r '.Credentials | "export AWS_ACCESS_KEY_ID=\\(.AccessKeyId)\nexport AWS_SECRET_ACCESS_KEY=\\(.SecretAccessKey)\nexport AWS_SESSION_TOKEN=\\(.SessionToken)\n"')
-          
+
+            bundle config set --local path gems
+            bundle install
+            bundle update
+
             tags="{cir_app_id = \\"payld\\", cir_dataclass = \\"sensitive\\", Integration-Env = \\"${ENVIRONMENT_DEPLOY}\\", Integration-Version = \\"v1\\", Integration-Branch = \\"${BRANCH_NAME}\\", Integration-User = \\"${BUILD_USER}\\", Integration-Repository = \\"https://bitbucket.org/nsw-education/loggingservice-splunklogforwarder\\"}"
 
             export TS_VERSION_CHECK=0
