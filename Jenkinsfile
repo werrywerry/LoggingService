@@ -51,6 +51,7 @@ pipeline {
         dir('src/lambda/splunk-forwarder') {
           sh '''            
             npm run test
+            ls -la
           '''
         }
       }
