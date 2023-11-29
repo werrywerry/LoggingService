@@ -58,7 +58,7 @@ pipeline {
 
       post {
         always {
-          junit skipPublishingChecks: false, testResults: './lambda/splunk-forwarder/junit.xml'
+          junit skipPublishingChecks: false, testResults: './src/lambda/splunk-forwarder/junit.xml'
 
           clover(cloverReportDir: 'coverage', cloverReportFileName: 'clover.xml',
             // optional, default is: method=70, conditional=80, statement=80
@@ -96,7 +96,7 @@ pipeline {
 
       post {
         always {
-          junit skipPublishingChecks: false, testResults: './lambda/subscription-filter-handler/junit.xml'
+          junit skipPublishingChecks: false, testResults: './src/lambda/subscription-filter-handler/junit.xml'
 
           clover(cloverReportDir: 'coverage', cloverReportFileName: 'clover.xml',
             // optional, default is: method=70, conditional=80, statement=80
