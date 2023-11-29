@@ -27,5 +27,26 @@
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.458.0",
     "zlib": "^1.0.5"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "globals": {
+      "ts-jest": {
+        "tsconfig": "./tsconfig.json"
+      }
+    },
+    "collectCoverage": true,
+    "coverageReporters": ["clover"],
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "./",
+          "outputName": "junit.xml"
+        }
+      ]
+    ]
   }
 }
