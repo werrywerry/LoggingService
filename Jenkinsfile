@@ -88,6 +88,7 @@ pipeline {
         dir('src/lambda/subscription-filter-handler') {
           sh '''            
             npm run test
+            ls -la
           '''
         }
       }
