@@ -1,11 +1,6 @@
-// tests.ts
+// SplunkForwarder index.test.ts
 
 import { handler } from './index'; 
-import { CloudWatchLogsClient } from "@aws-sdk/client-cloudwatch-logs";
-
-jest.mock("@aws-sdk/client-cloudwatch-logs", () => {
-  // Your mock implementation
-});
 
 describe('SplunkForwarder Tests', () => {
   // Set any global configuration for your tests
