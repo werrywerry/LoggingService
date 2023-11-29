@@ -46,7 +46,7 @@ pipeline {
       }
     }          
 
-    stage('Run Unit Tests') {
+    stage('Run Unit Tests for SplunkForwarder') {
       steps {
         dir('src/lambda/splunk-forwarder') {
           sh '''            
@@ -83,7 +83,7 @@ pipeline {
       }
     }          
 
-    stage('Run Unit Tests') {
+    stage('Run Unit Tests for SubscriptionFilterHandler') {
       steps {
         dir('src/lambda/subscription-filter-handler') {
           sh '''            
