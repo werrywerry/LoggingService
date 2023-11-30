@@ -24,7 +24,7 @@ resource "aws_lambda_function" "splunk_forwarder" {
   environment {
     variables = {
       SPLUNK_URL             = var.splunk_url
-      SPLUNK_REQUEST_CHANNEL = "c4e8ad02-9b5d-451c-b60e-829ce060d412"
+      SPLUNK_REQUEST_CHANNEL = var.splunk_request_channel
       ENV                    = var.env
     }
   }

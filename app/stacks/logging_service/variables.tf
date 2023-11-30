@@ -7,6 +7,10 @@ variable "splunk_url" {
   type = string
 }
 
+variable "splunk_request_channel" {
+  type = string
+}
+
 variable "tags" {
   description = "A mapping of tags to assign the resource"
   type = map(string)
