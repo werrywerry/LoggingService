@@ -23,15 +23,15 @@ resource "aws_lambda_function" "splunk_forwarder" {
   tags    = var.tags
   environment {
     variables = {
-      SPLUNK_URL             = "https://http-inputs-nswdoe.splunkcloud.com/services/collector/event"
+      SPLUNK_URL             = var.splunk_url
       SPLUNK_REQUEST_CHANNEL = "c4e8ad02-9b5d-451c-b60e-829ce060d412"
-      ENV : var.env
+      ENV                    = var.env
     }
   }
 }
 
 resource "aws_iam_role" "splunk_forwarder_exec_role" {
-  name = "LoggingService-SplunkForwarder-${var.env}-role"
+  name = "LoggingService-SplunkForwarder-${var.env}-Role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -56,7 +56,7 @@ resource "aws_lambda_permission" "splunk_forwarder_allow_cloudwatch" {
 }
 
 resource "aws_iam_policy" "splunk_forwarder_exec_policy" {
-  name        = "LoggingService-SplunkForwarder-${var.env}-policy"
+  name        = "LoggingService-SplunkForwarder-${var.env}-Policy"
   description = "IAM policy for Lambda function LoggingService-SplunkForwarder-${var.env}"
 
   policy = jsonencode({
@@ -114,7 +114,7 @@ resource "aws_lambda_function" "subscription_filter_handler" {
   environment {
     variables = {
       ENV : var.env,
-      REMOVE_SUBSCRIPTIONS : "true",
+      REMOVE_SUBSCRIPTIONS : "false",
       SPLUNK_FORWARDER_ARN : aws_lambda_function.splunk_forwarder.arn
     }
   }
@@ -123,7 +123,7 @@ resource "aws_lambda_function" "subscription_filter_handler" {
 
 # Lambda IAM role
 resource "aws_iam_role" "subscription_filter_exec_role" {
-  name = "LoggingService-SubscriptionFilterHandler-${var.env}-role"
+  name = "LoggingService-SubscriptionFilterHandler-${var.env}-Role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -141,7 +141,7 @@ resource "aws_iam_role" "subscription_filter_exec_role" {
 
 # Lambda IAM policy
 resource "aws_iam_policy" "subscription_filter_exec_policy" {
-  name        = "LoggingService-SubscriptionFilterHandler-${var.env}-policy"
+  name        = "LoggingService-SubscriptionFilterHandler-${var.env}-Policy"
   description = "IAM policy for Lambda function LoggingService-SubscriptionFilterHandler-${var.env}"
 
   policy = jsonencode({

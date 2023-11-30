@@ -1,38 +1,64 @@
 import * as zlib from "zlib";
+import { Context } from 'aws-lambda';
 import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
+import { createLogger, getLogger, LogLevel } from 'logging';
+import { v4 as uuidv4 } from 'uuid';
 
 const client = new SecretsManagerClient({ region: "ap-southeast-2" });
 let logGroupName = "";
 let cachedSecrets: any;
 let splunkIndexToken = "";
+let logLevel: LogLevel;
 
-export const handler = async (event: any, context: any) => {
+export const handler = async (event: any, context: Context) => {
+
+  if (!process.env.LOG_LEVEL) {
+    if (process.env.ENV === "Prod") {
+      logLevel = LogLevel.ERROR
+    } else {
+      logLevel = LogLevel.INFO
+    }
+  } else {
+    logLevel = process.env.LOG_LEVEL as LogLevel
+  }
+  
+  const logger = createLogger({
+    Header: {
+      Environment: process.env.ENV,
+      SystemName: 'LoggingService',
+      ComponentName: 'SplunkLogForwarder',
+      SubcomponentName: 'SplunkForwarder',
+      TrackingId: uuidv4(),
+      RequestId: context.awsRequestId,
+      XrayTraceId: process.env._X_AMZN_TRACE_ID,
+      LogLevel: logLevel
+    }
+  });
+
   const logs = prepareLogEvents(event);
-  console.log("Input: %j", { event, logs: logs, context });
+  logger.debug("Log Inputs", { SupplementaryData: { event, logs: logs, context } });
 
   if (!cachedSecrets) {
     try {
       cachedSecrets = await getSecret("LoggingService-SplunkIndexToken");
-    } catch (err) {
-      console.error("Error retrieving Splunk Index Token from Secrets Manager", err);
-      throw err;
+    } catch (error: any) {
+      logger.error("Error retrieving Splunk Index Token from Secrets Manager", { SupplementaryData: error });
+      throw error;
     }
   }
   if (cachedSecrets) {
     try {
       splunkIndexToken = extractTokenFromSecrets();
-    } catch (err) {
-      console.error(`Unable to determine splunkIndexToken from cachedSecrets. Values are: ${cachedSecrets}`, err)
+    } catch (error: any) {
+      logger.error("Unable to determine splunkIndexToken from cachedSecrets", { SupplementaryData: error });
     }
-  } else {
-    throw new Error("cachedSecrets variable not found");
   }
 
   for (const log of logs) {
     try {
       await sendLogEvent(log);
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      logger.error("Error sending log to Splunk", { SupplementaryData: error });
     }
   }
 };
@@ -59,6 +85,7 @@ function prepareLogEvents(event: any) {
 }
 
 async function sendLogEvent(log: any) {
+  const logger = getLogger();
   let metadata;
   // If structured log, extract metadata
   if (log.message.Header) {
@@ -109,13 +136,14 @@ async function sendLogEvent(log: any) {
 
   try {
     const response = await fetch(process.env.SPLUNK_URL!, request);
-    console.log("Splunk result: %j", { body: await response.text(), status: response.status });
-  } catch (e) {
-    console.error("Error sending log to Splunk: %j", { log, e });
+    logger.info("Splunk result", { SupplementaryData: { body: await response.text(), status: response.status } });
+  } catch (error: any) {
+    logger.error("Error sending log to Splunk", { SupplementaryData: error });
   }
 }
 
 async function getSecret(secretName: string): Promise<any> {
+  const logger = getLogger();
   const command = new GetSecretValueCommand({ SecretId: secretName });
   try {
     const data = await client.send(command);
@@ -123,16 +151,16 @@ async function getSecret(secretName: string): Promise<any> {
       return JSON.parse(data.SecretString);
     }
     throw new Error("Secret binary not supported or missing SecretString");
-  } catch (err) {
-    console.error("Error retrieving secret:", err);
-    throw err;
+  } catch (error: any) {
+    logger.error("Error retrieving secret", { SupplementaryData: error });
+    throw error;
   }
 }
 
 function safelyParseJSON(json: string) {
   try {
     return JSON.parse(json);
-  } catch (e) {
+  } catch (error) {
     return json;
   }
 }

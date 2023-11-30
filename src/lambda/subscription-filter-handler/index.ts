@@ -5,15 +5,20 @@ import {
   PutSubscriptionFilterCommand,
   DeleteSubscriptionFilterCommand
 } from "@aws-sdk/client-cloudwatch-logs";
+import { createLogger, getLogger, LogLevel } from 'logging';
+import { Context } from 'aws-lambda';
+import { v4 as uuidv4 } from 'uuid';
 
 const logsClient = new CloudWatchLogsClient({ region: "ap-southeast-2" });
-const logGroupsWithFilters: string[] = [];
-const subscriptionsToAdd: string[] = [];
-const subscriptionsToRemove: string[] = [];
+const subscriptionFiltersFailed: string[] = [];
+const subscriptionFiltersAdded: string[] = [];
+const subscriptionFiltersRemoved: string[] = [];
 const filterName = `LogsForSplunkForwarderLambda-${process.env.ENV}`;
-var MAX_RETRIES: number;
-var retryCount: number;
-var errorState: boolean;
+let MAX_RETRIES: number;
+let retryCount: number;
+let errorState: boolean;
+let warnState: boolean;
+let logLevel: LogLevel;
 
 interface CloudTrailEventDetail {
   eventName: string;
@@ -27,21 +32,64 @@ interface CloudTrailEvent {
   detail: CloudTrailEventDetail;
 }
 
-export const handler = async (event: CloudTrailEvent) => {
+export const handler = async (event: CloudTrailEvent, context: Context) => {
   MAX_RETRIES = 15; // Adjust as needed
   retryCount = 0;
   errorState = false;
+  warnState = false;
+
+  if (!process.env.LOG_LEVEL) {
+    if (process.env.ENV === "Prod") {
+      logLevel = LogLevel.ERROR
+    } else {
+      logLevel = LogLevel.INFO
+    }
+  } else {
+    logLevel = process.env.LOG_LEVEL as LogLevel
+  }
+
+  const logger = createLogger({
+    Header: {
+      Environment: process.env.ENV,
+      SystemName: 'LoggingService',
+      ComponentName: 'SplunkLogForwarder',
+      SubcomponentName: 'SubscriptionFilterHandler',
+      TrackingId: uuidv4(),
+      RequestId: context.awsRequestId,
+      XrayTraceId: process.env._X_AMZN_TRACE_ID,
+      LogLevel: logLevel
+    }
+  });
 
   try {
     await processExistingLogGroups();
-    if (errorState) {
-      return { status: 'Complete with errors. Check logs' }
-    } else {
-      return { status: 'Success' };
-    }
-  } catch (error) {
-    console.error(error);
+  } catch (error: any) {
+    logger.error("An error occurred", { SupplementaryData: error });
     errorState = true;
+  }
+
+  logger.info("These operations were performed", {
+    SupplementaryData: {
+      SubscriptionFiltersAdded: subscriptionFiltersAdded.length,
+      SubscriptionFiltersRemoved: subscriptionFiltersRemoved.length,
+      SubscriptionFiltersFailed: subscriptionFiltersFailed.length
+    }
+  });
+
+  logger.debug("These specific operations were performed", {
+    SupplementaryData: {
+      SubscriptionFiltersAdded: subscriptionFiltersAdded,
+      SubscriptionFiltersRemoved: subscriptionFiltersRemoved,
+      SubscriptionFiltersFailed: subscriptionFiltersFailed
+    }
+  });
+
+  if (errorState) {
+    return { status: 'Complete with errors. Check logs' };
+  } else if (warnState) {
+    return { status: 'Complete with warnings. Check logs' };
+  } else {
+    return { status: 'Success' };
   }
 };
 
@@ -74,6 +122,7 @@ async function processExistingLogGroups() {
 }
 
 async function ensureSubscriptionFilter(logGroupName: string) {
+  const logger = getLogger();
   try {
     const desiredDestinationArn = process.env.SPLUNK_FORWARDER_ARN!;
     const describeSubscriptionFiltersCommand = new DescribeSubscriptionFiltersCommand({
@@ -85,38 +134,36 @@ async function ensureSubscriptionFilter(logGroupName: string) {
     const existingFilterWithDesiredArn = subscriptionFilters.find(filter => filter.destinationArn === desiredDestinationArn);
 
     if (existingFilterWithDesiredArn && process.env.REMOVE_SUBSCRIPTIONS === "true") {
-      subscriptionsToRemove.push(logGroupName);
       await removeSubscriptionFilter(logGroupName);
+      subscriptionFiltersRemoved.push(logGroupName);
     }
     else if (!existingFilterWithDesiredArn && process.env.REMOVE_SUBSCRIPTIONS === "false") {
       if (subscriptionFilters.length < 2) {
-
-        if (subscriptionFilters.length > 0) {
-          logGroupsWithFilters.push(logGroupName);
-        }
-        subscriptionsToAdd.push(logGroupName);
-
         await createSubscriptionFilter(logGroupName, desiredDestinationArn);
+        subscriptionFiltersAdded.push(logGroupName);
       } else {
-        console.warn(`Error: Log group ${logGroupName} already has two subscription filters. One filter needs to be removed to add the Splunk forwarder filter.`);
-        errorState = true;
+        logger.warn(`Error: Log group ${logGroupName} already has two subscription filters. One filter needs to be removed to add the Splunk forwarder filter.`);
+        subscriptionFiltersFailed.push(logGroupName);
+        warnState = true;
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     const typedError = error as Error;
     retryCount++;
     if (typedError.name === 'ThrottlingException' && retryCount < MAX_RETRIES) {
-      console.log(`ThrottlingException encountered. Retrying... (Retry count: ${retryCount}/${MAX_RETRIES})`);
+      logger.info(`ThrottlingException encountered. Retrying... (Retry count: ${retryCount}/${MAX_RETRIES})`);
       await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000)); // Exponential backoff
       return ensureSubscriptionFilter(logGroupName);
     } else {
-      console.log(error);
+      logger.error("An error occured", { SupplementaryData: error });
       errorState = true;
+      subscriptionFiltersFailed.push(logGroupName);
     }
   }
 }
 
 async function createSubscriptionFilter(logGroupName: string, desiredDestinationArn: string) {
+  const logger = getLogger();
   try {
     const putSubscriptionFilterCommand = new PutSubscriptionFilterCommand({
       logGroupName: logGroupName,
@@ -125,13 +172,16 @@ async function createSubscriptionFilter(logGroupName: string, desiredDestination
       destinationArn: desiredDestinationArn,
     });
     await logsClient.send(putSubscriptionFilterCommand);
-  } catch (error) {
-    console.error(`Error creating subscription filter for log group '${logGroupName}':`, error);
+  } catch (error: any) {
+    logger.error(`Error creating subscription filter for log group '${logGroupName}'`, { SupplementaryData: error });
+    subscriptionFiltersFailed.push(logGroupName);
     errorState = true;
+    throw error;
   }
 }
 
 async function removeSubscriptionFilter(logGroupName: string) {
+  const logger = getLogger();
   try {
     const deleteSubscriptionFilterCommand = new DeleteSubscriptionFilterCommand({
       logGroupName: logGroupName,
@@ -139,8 +189,9 @@ async function removeSubscriptionFilter(logGroupName: string) {
     });
 
     await logsClient.send(deleteSubscriptionFilterCommand);
-  } catch (error) {
-    console.error(`Error removing subscription filter from log group '${logGroupName}':`, error);
+  } catch (error: any) {
+    logger.error(`Error removing subscription filter from log group '${logGroupName}'`, { SupplementaryData: error });
     errorState = true;
+    throw error;
   }
 }

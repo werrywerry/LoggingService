@@ -3,6 +3,10 @@ variable "env" {
   type = string
 }
 
+variable "splunk_url" {
+  type = string
+}
+
 variable "tags" {
   description = "A mapping of tags to assign the resource"
   type = map(string)
