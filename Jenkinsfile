@@ -127,7 +127,7 @@ pipeline {
             bundle install
             bundle update
 
-            tags="{cir_app_id = \\"logsrv\\", cir_dataclass = \\"sensitive\\", Integration-Env = \\"${ENVIRONMENT_DEPLOY}\\", Integration-Version = \\"v1\\", Integration-Branch = \\"${BRANCH_NAME}\\", Integration-User = \\"${BUILD_USER}\\", Integration-Repository = \\"https://bitbucket.org/nsw-education/loggingservice-splunklogforwarder\\"}"
+            tags="{Integration-Env = \\"${ENVIRONMENT_DEPLOY}\\", Integration-Branch = \\"${BRANCH_NAME}\\", Integration-User = \\"${BUILD_USER}\\"}"
 
             export TS_VERSION_CHECK=0
 
