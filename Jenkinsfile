@@ -131,7 +131,7 @@ pipeline {
 
             export TS_VERSION_CHECK=0
 
-            TS_ENV=${ENVIRONMENT_DEPLOY} bundle exec terraspace up logging_service  --auto-approve --verbose
+            TS_ENV=${ENVIRONMENT_DEPLOY} bundle exec terraspace up logging_service  --auto-approve --verbose -var "tags=${tags}"
           '''
         }
       }
