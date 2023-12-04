@@ -129,39 +129,33 @@ resource "aws_iam_role" "subscription_filter_exec_role" {
   })
 }
 
-# Lambda IAM policy
-resource "aws_iam_policy" "subscription_filter_exec_policy" {
-  name        = "LoggingService-SubscriptionFilterHandler-${var.env}-Policy"
-  description = "IAM policy for Lambda function LoggingService-SubscriptionFilterHandler-${var.env}"
+# IAM Policy Document for Subscription Filter Handler Lambda
+data "aws_iam_policy_document" "subscription_filter_exec_policy" {
+  statement {
+    effect    = "Allow"
+    actions   = ["logs:CreateLogGroup"]
+    resources = ["arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:*"]
+  }
 
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect   = "Allow",
-        Action   = "logs:CreateLogGroup",
-        Resource = "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:*"
-      },
-      {
-        Effect = "Allow",
-        Action = [
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:DescribeLogGroups",           // Permission to describe log groups
-          "logs:DescribeSubscriptionFilters", // Permission to describe log group subscriptions
-          "logs:PutSubscriptionFilter",       // Permission to put log group subscriptions
-          "logs:DeleteSubscriptionFilter"
-        ],
-        Resource = ["*"]
-      },
-    ],
-  })
+  statement {
+    effect    = "Allow"
+    actions   = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "logs:DescribeLogGroups",
+      "logs:DescribeSubscriptionFilters",
+      "logs:PutSubscriptionFilter",
+      "logs:DeleteSubscriptionFilter"
+    ]
+    resources = ["*"]
+  }
 }
 
-# Attach policy to role
-resource "aws_iam_role_policy_attachment" "subscription_filter_exec_policy_attachment" {
-  role       = aws_iam_role.subscription_filter_exec_role.name
-  policy_arn = aws_iam_policy.subscription_filter_exec_policy.arn
+# Create IAM Role Policy for Subscription Filter Handler Lambda
+resource "aws_iam_role_policy" "subscription_filter_exec_policy" {
+  name   = "LoggingService-SubscriptionFilterHandler-${var.env}-Policy"
+  policy = data.aws_iam_policy_document.subscription_filter_exec_policy.json
+  role   = aws_iam_role.subscription_filter_exec_role.id
 }
 
 # LogGroupCreated event rule

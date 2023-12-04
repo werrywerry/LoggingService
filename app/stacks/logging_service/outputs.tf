@@ -47,13 +47,3 @@ output "subscription_filter_exec_role_arn" {
   description = "The ARN of the IAM role assumed by the Lambda function."
   value       = aws_iam_role.subscription_filter_exec_role.arn
 }
-
-output "subscription_filter_exec_policy_arn" {
-  description = "The ARN of the IAM policy attached to the Lambda function."
-  value       = aws_iam_policy.subscription_filter_exec_policy.arn
-}
-
-output "subscription_filter_exec_policy_attachment_id" {
-  description = "The ID of the IAM policy attachment."
-  value       = aws_iam_role_policy_attachment.subscription_filter_exec_policy_attachment.id
-}
