@@ -55,27 +55,37 @@ resource "aws_lambda_permission" "splunk_forwarder_allow_cloudwatch" {
   source_arn    = "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:*"
 }
 
-data "aws_iam_policy_document" "splunk_forwarder_exec_policy" {
-  statement {
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents"
+resource "aws_iam_policy" "splunk_forwarder_exec_policy" {
+  name        = "LoggingService-SplunkForwarder-${var.env}-Policy"
+  description = "IAM policy for Lambda function LoggingService-SplunkForwarder-${var.env}"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Action" : [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        "Effect" : "Allow",
+        "Resource" : [
+          "arn:aws:logs:*:*:*"
+        ],
+        "Sid" : "allowLogging"
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : "secretsmanager:GetSecretValue",
+        "Resource" : "arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:LoggingService-SplunkIndexToken-*"
+      }
     ]
-    effect   = "Allow"
-    resources = ["arn:aws:logs:*:*:*"]
-  }
-  statement {
-    actions = ["secretsmanager:GetSecretValue"]
-    effect   = "Allow"
-    resources = ["arn:aws:secretsmanager:${var.region}:${data.aws_caller_identity.current.account_id}:secret:LoggingService-SplunkIndexToken-*"]
-  }
+  })
 }
 
-resource "aws_iam_role_policy" "splunk_forwarder_exec_policy" {
-  name   = "LoggingService-SplunkForwarder-${var.env}-Policy"
-  policy = "${data.aws_iam_policy_document.splunk_forwarder_exec_policy.json}"
-  role   = aws_iam_role.splunk_forwarder_exec_role.id
+resource "aws_iam_role_policy_attachment" "splunk_forwarder_exec_policy_attachment" {
+  role       = aws_iam_role.splunk_forwarder_exec_role.name
+  policy_arn = aws_iam_policy.splunk_forwarder_exec_policy.arn
 }
 
 ######## Subscription Filter Handler Resources ########

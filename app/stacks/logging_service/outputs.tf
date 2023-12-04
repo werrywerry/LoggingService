@@ -23,16 +23,6 @@ output "splunk_forwarder_exec_role_arn" {
   value       = aws_iam_role.splunk_forwarder_exec_role.arn
 }
 
-output "splunk_forwarder_exec_policy_arn" {
-  description = "The ARN of the IAM policy attached to the Lambda function."
-  value       = aws_iam_policy.splunk_forwarder_exec_policy.arn
-}
-
-output "splunk_forwarder_exec_policy_attachment_id" {
-  description = "The ID of the IAM policy attachment."
-  value       = aws_iam_role_policy_attachment.splunk_forwarder_exec_policy_attachment.id
-}
-
 output "subscription_filter_name" {
   description = "The name of the Lambda function."
   value       = aws_lambda_function.subscription_filter_handler.function_name
