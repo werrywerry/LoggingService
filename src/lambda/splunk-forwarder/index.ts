@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const client = new SecretsManagerClient({ region: "ap-southeast-2" });
 let logGroupName = "";
-let cachedSecrets: any;
+export let cachedSecrets: any;
 let splunkIndexToken = "";
 let logLevel: LogLevel;
 
@@ -51,6 +51,7 @@ export const handler = async (event: any, context: Context) => {
       splunkIndexToken = extractTokenFromSecrets();
     } catch (error: any) {
       logger.error("Unable to determine splunkIndexToken from cachedSecrets", { SupplementaryData: error });
+      throw error;
     }
   }
 
@@ -63,11 +64,11 @@ export const handler = async (event: any, context: Context) => {
   }
 };
 
-function extractTokenFromSecrets() {
+export function extractTokenFromSecrets() {
   return cachedSecrets.SPLUNK_INDEX_TOKEN;
 }
 
-function prepareLogEvents(event: any) {
+export function prepareLogEvents(event: any) {
   if (!event?.awslogs?.data) {
     return;
   }
@@ -139,10 +140,11 @@ async function sendLogEvent(log: any) {
     logger.info("Splunk result", { SupplementaryData: { body: await response.text(), status: response.status } });
   } catch (error: any) {
     logger.error("Error sending log to Splunk", { SupplementaryData: error });
+    throw error;
   }
 }
 
-async function getSecret(secretName: string): Promise<any> {
+export async function getSecret(secretName: string): Promise<any> {
   const logger = getLogger();
   const command = new GetSecretValueCommand({ SecretId: secretName });
   try {
@@ -157,7 +159,7 @@ async function getSecret(secretName: string): Promise<any> {
   }
 }
 
-function safelyParseJSON(json: string) {
+export function safelyParseJSON(json: string) {
   try {
     return JSON.parse(json);
   } catch (error) {
