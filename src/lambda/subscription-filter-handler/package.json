@@ -16,7 +16,7 @@
   "license": "Proprietary",
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.441.0",
-    "logging": "git+ssh://bitbucket.org:nsw-education/sharedcomponents_structuredlogging.git#release/1.0.1",
+    "logging": "git+ssh://bitbucket.org:nsw-education/sharedcomponents_structuredlogging.git#release/1.0.2",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
