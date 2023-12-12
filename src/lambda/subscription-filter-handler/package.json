@@ -1,0 +1,60 @@
+{
+  "name": "loggingservice-subscriptionfilterhandler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/lambda/index.ts",
+  "scripts": {
+    "test": "jest",
+    "clean-win": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path ./dist) { Remove-Item -Recurse -Force ./dist }; if (Test-Path ./package.zip) { Remove-Item -Force ./package.zip }\"",
+    "build-win": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"npm run clean-win; tsc; New-Item -Path ./dist -ItemType Directory -Force; Copy-Item -Recurse node_modules ./dist/node_modules\"",
+    "all-win": "npm run build && npm run deploy",
+    "package": "cp package.json dist/ && cd dist/ && npm install --omit=dev",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "Joel Bradley <Joel.Bradley3@det.nsw.edu.au>",
+  "license": "Proprietary",
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.441.0",
+    "logging": "git+ssh://bitbucket.org:nsw-education/sharedcomponents_structuredlogging.git#release/1.0.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.119",
+    "@types/jest": "^29.5.10",
+    "@types/node": "^18.15.11",
+    "@types/uuid": "^9.0.7",
+    "aws-lambda": "^1.0.7",
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.2"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "globals": {
+      "ts-jest": {
+        "tsconfig": "./tsconfig.json"
+      }
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ],
+    "collectCoverage": true,
+    "coverageReporters": [
+      "clover"
+    ],
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "./",
+          "outputName": "junit.xml"
+        }
+      ]
+    ]
+  }
+}

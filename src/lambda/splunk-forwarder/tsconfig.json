@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "forceConsistentCasingInFileNames": true,
+    // "noErrorTruncation": true
+    "rootDir": "./",
+    "target": "es2020",
+    "strict": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "types": [
+      "jest",
+      "node"
+    ]
+  },
+  "exclude": [
+    "examples",
+    "node_modules",
+    "**/*.test.ts",
+    "test",
+    "coverage",
+    "dist",
+    "*.js"
+  ]
+}
