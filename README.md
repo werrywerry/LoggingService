@@ -14,12 +14,14 @@ This README documents the CloudWatch to Splunk Logging Solution. This solution a
 - Terraform installed for infrastructure deployment.
 
 ### Deployment ###
-**NEEDS UPDATING FOR JENKINS**
 1. Configure Terraform Variables: Set the required variables in variables.tf (e.g., region, env).
 2. Package Lambda Functions: Ensure that the source directories for the Lambda functions contain the latest code.
 3. Run Terraform Commands:
     - Plan the deployment: terraform plan
     - Apply the configuration: terraform apply
+
+### Deployment Using CI/CD ###
+For deployment instructions using Jenkins CI/CD pipelines, please consult https://confluence.education.nsw.gov.au/pages/viewpage.action?pageId=482050120
 
 ### Configuration ###
 - Environment Variables: Review and set environment variables in the Lambda function definitions in the Terraform script (e.g., SPLUNK_URL, SPLUNK_REQUEST_CHANNEL).
@@ -33,6 +35,3 @@ This README documents the CloudWatch to Splunk Logging Solution. This solution a
 ### Maintenance ###
 - Update Lambda Code: To update Lambda functions, replace the source code in the respective directories and redeploy using Terraform.
 - Monitor AWS Resources: Regularly check AWS resources for any unexpected changes or usage.
-
-### Contact ###
-- For any issues or questions, contact the project maintainer at [maintainer's email/contact information].
