@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.458.0",
-    "logging": "git+ssh://bitbucket.org:nsw-education/sharedcomponents_structuredlogging.git#release/1.0.1",
+    "logging": "git+ssh://bitbucket.org:nsw-education/sharedcomponents_structuredlogging.git#release/1.0.2",
     "uuid": "^9.0.1",
     "zlib": "^1.0.5"
   },
