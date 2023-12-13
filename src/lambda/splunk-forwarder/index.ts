@@ -88,7 +88,6 @@ export function prepareLogEvents(event: any) {
 async function sendLogEvent(log: any) {
   const logger = getLogger();
   let metadata;
-  let environment;
   // If structured log, extract metadata
   if (log.message.Header) {
     metadata = {
@@ -99,9 +98,6 @@ async function sendLogEvent(log: any) {
       TrackingId: log.message.Header.TrackingId,
       XrayTraceId: log.message.Header.XrayTraceId,
     }
-    environment = log.message.Header.Environment;
-  } else {
-    environment = process.env.ENV;
   }
 
   let level;
@@ -127,7 +123,7 @@ async function sendLogEvent(log: any) {
       sourcetype: "CloudWatch Log Group",
       event: log,
       fields: {
-        Environment: environment,
+        Environment: process.env.ENV,
         LogGroup: logGroupName,
         ComponentName: metadata?.ComponentName,
         CreationTime: metadata?.CreationTime,
