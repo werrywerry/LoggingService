@@ -38,6 +38,7 @@ export const handler = async (event: CloudTrailEvent, context: Context) => {
   errorState = false;
   warnState = false;
 
+  // set log level
   if (!process.env.LOG_LEVEL) {
     if (process.env.ENV === "Prod") {
       logLevel = LogLevel.ERROR
@@ -48,6 +49,7 @@ export const handler = async (event: CloudTrailEvent, context: Context) => {
     logLevel = process.env.LOG_LEVEL as LogLevel
   }
 
+  // create logger instance
   const logger = createLogger({
     Header: {
       Environment: process.env.ENV,
@@ -61,6 +63,7 @@ export const handler = async (event: CloudTrailEvent, context: Context) => {
     }
   });
 
+  // audit all lambda log groups for subscription filters
   try {
     await processExistingLogGroups();
   } catch (error: any) {
@@ -84,6 +87,7 @@ export const handler = async (event: CloudTrailEvent, context: Context) => {
     }
   });
 
+  // return success state
   if (errorState) {
     return { status: 'Complete with errors. Check logs' };
   } else if (warnState) {
@@ -94,16 +98,20 @@ export const handler = async (event: CloudTrailEvent, context: Context) => {
 };
 
 async function processExistingLogGroups() {
+  // initalize processing token for describe log groups request
   let nextToken: string | undefined;
   const logGroupNames: string[] = [];
 
   do {
+    // DescribeLogGroups returns a limit of 50 log groups per request
+    // use next token to get more
     const describeLogGroupsCommand = new DescribeLogGroupsCommand({
       nextToken: nextToken,
     });
     const logGroupsResponse = await logsClient.send(describeLogGroupsCommand);
 
-    // Add log group names to the array
+    // Add log group names to the array for processing
+    // Includes only lambda log groups excluding the Splunk Forwarde lambda log group
     logGroupsResponse.logGroups?.forEach((logGroup) => {
       if (logGroup.logGroupName
         && logGroup.logGroupName.startsWith("/aws/lambda/")
@@ -116,6 +124,8 @@ async function processExistingLogGroups() {
     nextToken = logGroupsResponse.nextToken;
   } while (nextToken);
 
+  // ensure each log group has or doesn't have subscription filter 
+  // based on select mode of adding or removing subscription filters
   for (const logGroupName of logGroupNames) {
     await ensureSubscriptionFilter(logGroupName);
   }
@@ -124,13 +134,17 @@ async function processExistingLogGroups() {
 async function ensureSubscriptionFilter(logGroupName: string) {
   const logger = getLogger();
   try {
+    // Destination ARN for splunk forwarder
     const desiredDestinationArn = process.env.SPLUNK_FORWARDER_ARN!;
+    
+    // Get existing subscription filters for current log group
     const describeSubscriptionFiltersCommand = new DescribeSubscriptionFiltersCommand({
       logGroupName: logGroupName
     });
     const filtersResponse = await logsClient.send(describeSubscriptionFiltersCommand);
     const subscriptionFilters = filtersResponse.subscriptionFilters || [];
 
+    // define existing filter with splunk forwarder ARN as destination
     const existingFilterWithDesiredArn = subscriptionFilters.find(filter => filter.destinationArn === desiredDestinationArn);
 
     if (existingFilterWithDesiredArn && process.env.REMOVE_SUBSCRIPTIONS === "true") {
@@ -138,6 +152,7 @@ async function ensureSubscriptionFilter(logGroupName: string) {
       subscriptionFiltersRemoved.push(logGroupName);
     }
     else if (!existingFilterWithDesiredArn && process.env.REMOVE_SUBSCRIPTIONS === "false") {
+      // log groups are limited to two subscription filters
       if (subscriptionFilters.length < 2) {
         await createSubscriptionFilter(logGroupName, desiredDestinationArn);
         subscriptionFiltersAdded.push(logGroupName);
@@ -150,11 +165,13 @@ async function ensureSubscriptionFilter(logGroupName: string) {
   } catch (error: any) {
     const typedError = error as Error;
     retryCount++;
+    // if error is a throttling exception, wait for the backoff period and retry
     if (typedError.name === 'ThrottlingException' && retryCount < MAX_RETRIES) {
       logger.info(`ThrottlingException encountered. Retrying... (Retry count: ${retryCount}/${MAX_RETRIES})`);
       await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000)); // Exponential backoff
       return ensureSubscriptionFilter(logGroupName);
     } else {
+      // otherwise, report error and move on to the next log group
       logger.error("An error occured", { SupplementaryData: error });
       errorState = true;
       subscriptionFiltersFailed.push(logGroupName);
