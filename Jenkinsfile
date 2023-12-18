@@ -110,6 +110,16 @@ pipeline {
       }
     }
 
+        stage('Pull Alarms Module') {
+      steps {
+        dir('app/stacks/logging_service') {
+          sh '''
+            terraform init
+          '''
+        }
+      }
+    }          
+
    stage('Deploy') {
       
       when {
