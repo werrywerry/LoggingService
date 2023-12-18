@@ -40,7 +40,7 @@ module "cloudwatch_alarms" {
 
     eventbridge_thresholds = {
     "default" = {
-
+        "eventbridge_dead_letter_threshold" : null
     }
   }
 
