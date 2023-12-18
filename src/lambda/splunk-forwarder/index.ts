@@ -21,7 +21,7 @@ export const handler = async (event: any, context: Context) => {
   } else {
     logLevel = process.env.LOG_LEVEL as LogLevel
   }
-  
+
   const logger = createLogger({
     Header: {
       Environment: process.env.ENV,
@@ -102,7 +102,8 @@ async function sendLogEvent(log: any) {
 
     environment = log.message.Header.Environment;
   } else {
-    environment = process.env.ENV;  }
+    environment = process.env.ENV;
+  }
 
   let level;
   if (log.message.level) {
