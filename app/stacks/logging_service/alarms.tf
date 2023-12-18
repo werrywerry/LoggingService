@@ -54,7 +54,7 @@ module "cloudwatch_alarms" {
       concurrent_executions_threshold   = null
       throttles_threshold               = null
     },
-    "LoggingService-SubscriptionFilterHandler-Dev" = {
+    "LoggingService-SplunkForwarder-Dev" = {
       success_rate_threshold            = null
       errors_threshold                  = null
       duration_threshold                = 2
