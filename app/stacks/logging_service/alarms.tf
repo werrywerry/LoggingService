@@ -29,7 +29,7 @@ module "cloudwatch_alarms" {
     "eventbridges" : [
       {
         "name" : "default",
-        "ruleName" : "LoggingService-NewLogGroupCreated-Dev"
+        "ruleName" : "LoggingService-NewLogGroupCreated-${var.env}"
       }
     ],
     "queues" : [
@@ -45,7 +45,7 @@ module "cloudwatch_alarms" {
   }
 
   lambda_thresholds = {
-    "LoggingService-SubscriptionFilterHandler-Dev" = {
+    "LoggingService-SubscriptionFilterHandler-${var.env}" = {
       success_rate_threshold            = null
       errors_threshold                  = null
       duration_threshold                = 120
@@ -54,7 +54,7 @@ module "cloudwatch_alarms" {
       concurrent_executions_threshold   = null
       throttles_threshold               = null
     },
-    "LoggingService-SplunkForwarder-Dev" = {
+    "LoggingService-SplunkForwarder-${var.env}" = {
       success_rate_threshold            = null
       errors_threshold                  = null
       duration_threshold                = 2
