@@ -1,5 +1,5 @@
 module "cloudwatch_alarms" {
-  source = "git::https://bitbucket.org/nsw-education/terraform-module-cloudwatch-alarms.git?ref=release/1.0.1"
+  source = "git@bitbucket.org:nsw-education/terraform-module-cloudwatch-alarms.git?ref=release/1.0.1"
 
   env = "Dev"
 
@@ -67,7 +67,7 @@ module "cloudwatch_alarms" {
 }
 
 module "cloudwatch_dashboards" {
-  source = "git::https://bitbucket.org/nsw-education/terraform-module-cloudwatch-dashboards.git?ref=release/1.0.0"
+  source = "git@bitbucket.org:nsw-education/terraform-module-cloudwatch-dashboards.git?ref=release/1.0.0"
 
   env = module.cloudwatch_alarms.env
 
