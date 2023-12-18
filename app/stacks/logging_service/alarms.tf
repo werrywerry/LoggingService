@@ -1,7 +1,7 @@
 module "cloudwatch_alarms" {
   source = "git@bitbucket.org:nsw-education/terraform-module-cloudwatch-alarms.git?ref=release/1.0.1"
 
-  env = "Dev"
+  env = var.env
 
   service_name = "LoggingService"
 
