@@ -18,9 +18,10 @@ resource "aws_lambda_function" "splunk_forwarder" {
 
   reserved_concurrent_executions = 120
 
-  timeout = 30                                          # Timeout for the Lambda function in seconds.
-  role    = aws_iam_role.splunk_forwarder_exec_role.arn # IAM role that the Lambda function assumes.
-  tags    = var.tags
+  timeout     = 30                                          # Timeout for the Lambda function in seconds.
+  memory_size = 192                                         # MB 
+  role        = aws_iam_role.splunk_forwarder_exec_role.arn # IAM role that the Lambda function assumes.
+  tags        = var.tags
   environment {
     variables = {
       SPLUNK_URL             = var.splunk_url

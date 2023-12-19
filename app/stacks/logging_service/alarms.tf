@@ -17,7 +17,7 @@ module "cloudwatch_alarms" {
         "lambda" : "LoggingService-SplunkForwarder-${var.env}",
         "timeout" : 15,
         "concurrency" : 120,
-        "memory" : 176
+        "memory" : 192
       }
     ],
     "rdss" : [
@@ -59,7 +59,7 @@ module "cloudwatch_alarms" {
       errors_threshold                  = null
       duration_threshold                = 3000
       memory_underutilization_threshold = null
-      memory_overutilization_threshold  = 162
+      memory_overutilization_threshold  = 176
       concurrent_executions_threshold   = 110
       throttles_threshold               = null
     }
