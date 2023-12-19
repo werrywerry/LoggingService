@@ -16,7 +16,7 @@ resource "aws_lambda_function" "splunk_forwarder" {
   handler          = "index.handler" # The function entrypoint in your code.
   runtime          = "nodejs18.x"    # Runtime environment for the Lambda function.
 
-  reserved_concurrent_executions = 10
+  reserved_concurrent_executions = 120
 
   timeout = 30                                          # Timeout for the Lambda function in seconds.
   role    = aws_iam_role.splunk_forwarder_exec_role.arn # IAM role that the Lambda function assumes.
