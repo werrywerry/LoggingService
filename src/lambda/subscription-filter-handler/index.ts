@@ -115,8 +115,9 @@ async function processExistingLogGroups() {
     logGroupsResponse.logGroups?.forEach((logGroup) => {
       if (logGroup.logGroupName
         && logGroup.logGroupName.startsWith("/aws/lambda/")
-        && !logGroup.logGroupName.includes("LoggingService-SplunkForwarder")) {
-        logGroupNames.push(logGroup.logGroupName);
+        && !logGroup.logGroupName.includes("LoggingService-SplunkForwarder")
+        && !logGroup.logGroupName.includes("student-finance-logging-aggregator-lambda")) {
+          logGroupNames.push(logGroup.logGroupName);
       }
     });
 

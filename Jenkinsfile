@@ -127,8 +127,7 @@ pipeline {
             bundle install
             bundle update
 
-            tags="{Integration-Env = \\"${ENVIRONMENT_DEPLOY}\\", Integration-Branch = \\"${BRANCH_NAME}\\", Integration-User = \\"${BUILD_USER}\\"}"
-
+            tags="{cir_app_id = \\"logsrv\\", cir_dataclass = \\"sensitive\\", Integration-Env = \\"${ENVIRONMENT_DEPLOY}\\", Integration-Version = \\"v1\\", Integration-Branch = \\"${BRANCH_NAME}\\", Integration-User = \\"${BUILD_USER}\\", Integration-Repository = \\"https://bitbucket.org/nsw-education/loggingservice-splunklogforwarder\\"}"
             export TS_VERSION_CHECK=0
 
             TS_ENV=${ENVIRONMENT_DEPLOY} bundle exec terraspace up logging_service  --auto-approve --verbose -var "tags=${tags}"

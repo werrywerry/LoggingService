@@ -15,9 +15,9 @@ module "cloudwatch_alarms" {
       },
       {
         "lambda" : "LoggingService-SplunkForwarder-${var.env}",
-        "timeout" : 3,
-        "concurrency" : 10,
-        "memory" : 128
+        "timeout" : 15,
+        "concurrency" : 120,
+        "memory" : 192
       }
     ],
     "rdss" : [
@@ -48,19 +48,19 @@ module "cloudwatch_alarms" {
     "LoggingService-SubscriptionFilterHandler-${var.env}" = {
       success_rate_threshold            = null
       errors_threshold                  = null
-      duration_threshold                = 120
+      duration_threshold                = 15000
       memory_underutilization_threshold = null
-      memory_overutilization_threshold  = null
-      concurrent_executions_threshold   = null
+      memory_overutilization_threshold  = 127
+      concurrent_executions_threshold   = 1
       throttles_threshold               = null
     },
     "LoggingService-SplunkForwarder-${var.env}" = {
       success_rate_threshold            = null
       errors_threshold                  = null
-      duration_threshold                = 2
+      duration_threshold                = 3000
       memory_underutilization_threshold = null
-      memory_overutilization_threshold  = null
-      concurrent_executions_threshold   = null
+      memory_overutilization_threshold  = 176
+      concurrent_executions_threshold   = 110
       throttles_threshold               = null
     }
   }
